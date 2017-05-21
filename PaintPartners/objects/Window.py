@@ -1,4 +1,4 @@
-import pygame,Paint,TextField,ConfigParser
+import pygame,Paint,TextField,configparser
 from pygame.locals import *
 
 def removekey(dictionary, key):
@@ -280,7 +280,7 @@ class WindowClients(WindowTextlist):
     def update(self,events,mousePos,username):
         WindowTextlist.update(self,events,mousePos)
 
-        for key,value in self.clients_icons.items():
+        for key,value in list(self.clients_icons.items()):
             if key == username and username != "":
                 value.set_pos(mousePos)
                 break
@@ -295,7 +295,7 @@ class WindowClients(WindowTextlist):
             screen.blit(label, (self.pos[0] + 8, self.pos[1] + 8 + (count * (font.size("X")[1]+4))))
             count += 1
 
-        for key,value in self.clients_icons.items():
+        for key,value in list(self.clients_icons.items()):
             if value.is_in_paint_window(image):
                 value.draw(screen)
             
@@ -413,7 +413,7 @@ class WindowPrompt(WindowRectangle):
         self.load_cfg()
 
     def load_cfg(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         try:
             config.readfp(open('profile.cfg'))
             server_ip = config.get('ProfileInfo','server')
@@ -430,7 +430,7 @@ class WindowPrompt(WindowRectangle):
                 config.write(configfile)
                 
     def write_cfg(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         config.readfp(open('profile.cfg'))
         config.set('ProfileInfo','username',self.username_field.message)
         config.set('ProfileInfo','server',self.server_field.message)

@@ -1,4 +1,4 @@
-import sys, pygame,client,ConfigParser
+import sys, pygame,client,configparser
 from pygame.locals import *
 pygame.init()
 from objects import Window,Paint
@@ -33,7 +33,7 @@ class Program(object):
           
         if connectAsAdmin == True:
             self.state = "STATE_MAIN"
-            config = ConfigParser.RawConfigParser()
+            config = configparser.RawConfigParser()
             config.readfp(open('server.cfg'))
             self.admin = config.get('ServerInfo', 'adminname')
             self.client.connect_to_server(self.admin,"localhost","",True)

@@ -1,13 +1,13 @@
-import sys,socket,thread,select,pygame,json,Queue,ConfigParser,re
-from urllib2 import urlopen
+import sys,socket,_thread,select,pygame,json,queue,configparser,re
+from urllib.request import urlopen
 from time import sleep
 from threading import Thread
 
 def parse_message(data,typeMessage=""):
-    return filter(None,re.split('[_\|]', data))
+    return [_f for _f in re.split('[_\|]', data) if _f]
 
 def parse_data(data):
-    return filter(None,re.split('[{}]', data))
+    return [_f for _f in re.split('[{}]', data) if _f]
 
 class ClientThreadSend(Thread):
     def __init__(self,client,socket):
@@ -15,7 +15,7 @@ class ClientThreadSend(Thread):
         self.daemon = True
         self.running = True
         self.conn = socket
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.client = client
     def add(self,data):
         self.q.put(data)
@@ -28,7 +28,7 @@ class ClientThreadSend(Thread):
                     message = self.q.get(block=True)
                     self.conn.send(message)
             except socket.error as msg:
-                print("Socket error!: " +  str(msg))
+                print(("Socket error!: " +  str(msg)))
                 self.client.disconnect_from_server()
                 self.running = False
         
@@ -81,7 +81,7 @@ class ClientThreadRecieve(Thread):
                             self.client.program.window_clients.remove_client(block[13:])
                         
             except socket.error as msg:
-                print("Socket error!: " + str(msg))
+                print(("Socket error!: " + str(msg)))
                 self.client.disconnect_from_server()
                 self.running = False
         
@@ -117,7 +117,7 @@ class Client(object):
                 self.username = username
                 self.server_pass = server_pass
                 if admin == True:
-                    config = ConfigParser.RawConfigParser()
+                    config = configparser.RawConfigParser()
                     config.readfp(open('server.cfg'))
                     self.server_pass = config.get('ServerInfo', 'serverpass')
 
@@ -147,7 +147,7 @@ class Client(object):
             else:
                 return False
         except Exception as e:
-            print("Error: " + str(e))
+            print(("Error: " + str(e)))
             return False
 
     def disconnect_from_server(self,message=""):

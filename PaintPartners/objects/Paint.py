@@ -1,17 +1,17 @@
-import pygame,copy,math,colorsys,Queue,Window
+import pygame,copy,math,colorsys,queue,Window
 import re
 from pygame.locals import *
 from threading import Thread
 
 def parse_data(data):
-    return filter(None,re.split('[{}]', data))
+    return [_f for _f in re.split('[{}]', data) if _f]
 
 class PixelProcessThread(Thread):
     def __init__(self,image,clientWindow):
         super(PixelProcessThread, self).__init__()
         self.daemon = True
         self.running = True
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.image = image
         self.clientWindow = clientWindow
     def add(self,data):
@@ -447,14 +447,14 @@ class PaintImage(object):
         string = "$" + self.program.client.username + ";" + str(mousePos[0]) + ":" + str(mousePos[1])
         if len(self.pixel_buffer) == 0:
             return string
-        for key,value in self.pixel_buffer.iteritems():
+        for key,value in self.pixel_buffer.items():
             string += "." + str(key[0]) + "," + str(key[1]) + "#" + value
         return string
     def convert_brush_buffer_to_string(self,mousePos):
         string = "$" + self.program.client.username + ";" + str(mousePos[0]) + ":" + str(mousePos[1])
         if len(self.brush_buffer) == 0:
             return string
-        for key,value in self.brush_buffer.iteritems():
+        for key,value in self.brush_buffer.items():
             string += "." + str(key[0]) + "," + str(key[1]) + "#" + value
         return string
     def convert_mouse_pos(self,mousePos):

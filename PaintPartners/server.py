@@ -1,13 +1,13 @@
-import socket,select,Queue,json,random,sys,ConfigParser,getpass,imp,re
+import socket,select,queue,json,random,sys,configparser,getpass,imp,re
 from threading import Thread
 from time import sleep
-from urllib2 import urlopen
+from urllib.request import urlopen
      
 def parse_message(data,typeMessage=""):
-    return filter(None,re.split('[_\|]', data))
+    return [_f for _f in re.split('[_\|]', data) if _f]
 
 def parse_data(data):
-    return filter(None,re.split('[{}]', data)) 
+    return [_f for _f in re.split('[{}]', data) if _f] 
 
 def removekey(dictionary, key):
     r = dict(dictionary)
@@ -24,7 +24,7 @@ class ServerListenThread(Thread):
         self.host = "127.0.0.1"
         self.port = 6121
         self.s.bind((self.host, self.port))
-        print(str(self.host) + " Listening on port : " + str(self.port)+"\r\n")
+        print((str(self.host) + " Listening on port : " + str(self.port)+"\r\n"))
         self.s.listen(10)
         
     def stop(self):
@@ -37,14 +37,14 @@ class ServerListenThread(Thread):
                 thread.start()
                 self.server.clients[address[0]] = thread
             except socket.error as msg:
-                print("Socket error!: " + str(msg))
+                print(("Socket error!: " + str(msg)))
                 pass
                     
 class ProcessThread(Thread):
     def __init__(self,server):
         super(ProcessThread, self).__init__()
         self.running = True
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.server = server
         self.username = ""
     def add(self, data, username):
@@ -60,9 +60,9 @@ class ProcessThread(Thread):
                 self.username = ""
                 
             #clean up any innactive threads
-            for key,value in self.server.clients.items():
+            for key,value in list(self.server.clients.items()):
                 if value.running == False:
-                    print("Removing Client: " + key)
+                    print(("Removing Client: " + key))
                     self.server.broadcast_notsource("_DISCONNECT_|" + key,key)
                     self.server.clients = removekey(self.server.clients,key)
 
@@ -86,7 +86,7 @@ class ClientThread(Thread):
                     else:
                         self.server.process_init(data,self)
             except socket.error as msg:
-                print("Socket error!: " + str(msg))
+                print(("Socket error!: " + str(msg)))
                 self.running = False
                 pass
         print("Closing connection...")
@@ -99,7 +99,7 @@ class InputThread(Thread):
         self.server = server
     def run(self):
         while self.running:
-            userinput = raw_input()
+            userinput = input()
             if userinput == "print clients":
                 self.server.print_clients()
             elif userinput == "print clients detail":
@@ -156,7 +156,7 @@ class Server():
             
     def print_clients(self):
         message = "\nConnected Clients: ["
-        for key,value in self.clients.iteritems():
+        for key,value in self.clients.items():
             message += str(key)+","
         message = message[:-1]
         message += "]\n"
@@ -167,18 +167,18 @@ class Server():
         print("----------------------------------")
         print("Connected Clients")
         print("----------------------------------")
-        for key,value in self.clients.iteritems():
+        for key,value in self.clients.items():
             print("----------------------------------")
-            print("Username:   " + str(value.username))
-            print("Connected:  " + str(value.running))
-            print("Address:    " + str(value.address))
+            print(("Username:   " + str(value.username)))
+            print(("Connected:  " + str(value.running)))
+            print(("Address:    " + str(value.address)))
             print("----------------------------------")
         print("----------------------------------\r\n")
         
         
     def load_cfg_yesorno(self,config,key,printstatement):
         while True:
-            inputstr = raw_input(printstatement)
+            inputstr = input(printstatement)
             if inputstr.lower() == "y":
                 config.set('ServerInfo',key,"1")
                 break
@@ -186,10 +186,10 @@ class Server():
                 config.set('ServerInfo',key,"0")
                 break
             else:
-                print("'"+inputstr+"' is not a valid answer.")
+                print(("'"+inputstr+"' is not a valid answer."))
                 
     def load_cfg(self):
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         try:
             config.readfp(open('server.cfg'))
         except Exception as e:
@@ -199,7 +199,7 @@ class Server():
             serverpassword = getpass.getpass("Please specify your server password: ")
             config.set('ServerInfo','serverpass',serverpassword)
             
-            username = raw_input("Please specify your admin username: ")
+            username = input("Please specify your admin username: ")
             config.set('ServerInfo','adminname',username)
             
             self.load_cfg_yesorno(config,"AllowEdits","Allow clients to edit drawing board? (type 'y' for 'yes', 'n' for 'no'): ")
@@ -209,14 +209,14 @@ class Server():
                 config.write(configfile)
           
     def broadcast(self,message):
-        for key,value in self.clients.iteritems():
+        for key,value in self.clients.items():
             value.conn.send("{"+message+"}")
     def broadcast_noadmin(self,message):
-        for key,value in self.clients.iteritems():
+        for key,value in self.clients.items():
             if key != self.admin:
                 value.conn.send("{"+message+"}")
     def broadcast_notsource(self,message,username):
-        for key,value in self.clients.iteritems():
+        for key,value in self.clients.items():
             if key != username:
                 value.conn.send("{"+message+"}")
                 
@@ -224,8 +224,8 @@ class Server():
         source_socket.send("{"+message+"}")
         
     def reply_to_client_username(self,message,username):
-        if not username in self.clients.keys():
-            print("Could not find username: " + username)
+        if not username in list(self.clients.keys()):
+            print(("Could not find username: " + username))
             return
         self.clients[username].conn.send("{"+message+"}")
 
@@ -236,11 +236,11 @@ class Server():
             for block in blocks:
                 if "_CONNECT_" in block:
                     messages = parse_message(block,"_CONNECT_")
-                    for key,value in self.clients.iteritems():
+                    for key,value in self.clients.items():
                         if key == messages[1]:
                             self.reply_to_client("_INVALIDUSERNAME_",client_thread.conn)
                             return
-                    config = ConfigParser.RawConfigParser()
+                    config = configparser.RawConfigParser()
                     config.readfp(open('server.cfg'))
                     serverPass = config.get('ServerInfo', 'serverpass')
 
@@ -261,7 +261,7 @@ class Server():
                         self.reply_to_client("_CONNECTVALIDNOEDIT_",client_thread.conn)
 
                     msg = ""
-                    for key,value in self.clients.items():
+                    for key,value in list(self.clients.items()):
                         msg += key + "|"
                     msg = msg[:-1]
                     self.broadcast("_CONNECT_" + msg)
@@ -273,7 +273,7 @@ class Server():
             
             client_thread = None
             #get client thread to work with
-            for key,value in self.clients.iteritems():
+            for key,value in self.clients.items():
                 if key == username:
                     client_thread = value
                     break
@@ -292,7 +292,7 @@ class Server():
                 elif "_DISCONNECT_" in block:
                     li = parse_message(block,"_DISCONNECT_")
                     self.broadcast(block)
-                    print("Removing Client: " + li[1])
+                    print(("Removing Client: " + li[1]))
                     self.clients = removekey(self.clients,li[1])
                     
         
